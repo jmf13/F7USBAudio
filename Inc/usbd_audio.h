@@ -105,8 +105,7 @@
 //!!! The size of the AUDIO_TOTAL_BUF_SIZE must be a multiple of AUDIO_OUTPUT_BUF_SIZE
 // in order to always be able to send a sequential buffer to the application (no ring
 // buffer rounding)
-//??
-#define AUDIO_OUTPUT_BUF_SIZE 128              	  // Audio buffer size for each channel, in samples
+#define AUDIO_OUTPUT_BUF_SIZE 512              	  // Audio buffer size for each channel, in samples
 #define AUDIO_TOTAL_BUF_SIZE AUDIO_OUTPUT_BUF_SIZE*8  // We want to work between 3/8 and 5/8 buffer
     /* Audio Commands enumeration */
 typedef enum
@@ -148,10 +147,10 @@ typedef struct
 {
   __IO uint32_t             alt_setting; 
   uint8_t                   buffer[AUDIO_TOTAL_BUF_SIZE*2];  // to contain enough AUDIO_TOTAL_BUF_SIZE 16bits stereo samples
-  AUDIO_OffsetTypeDef       offset; //?? Check if offset useful
-  uint8_t                    rd_enable;  
-  uint16_t                   rd_ptr;  
-  uint16_t                   wr_ptr;  
+  AUDIO_OffsetTypeDef       offset;
+  uint8_t                   rd_enable;
+  uint16_t                  rd_ptr;
+  uint16_t                  wr_ptr;
   USBD_AUDIO_ControlTypeDef control;   
 }
 USBD_AUDIO_HandleTypeDef; 

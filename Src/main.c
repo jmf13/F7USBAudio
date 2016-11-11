@@ -108,10 +108,8 @@ int main(void)
   MX_SAI1_Init();
   MX_USB_DEVICE_Init();
 
-  //?? BSP_LED_On(LED3);
 
-
-
+  // Go to audio infinite loop
   Audio_Loop();
 
   /* USER CODE END 2 */
@@ -121,11 +119,7 @@ int main(void)
   while (1)
   {
   /* USER CODE BEGIN WHILE */
-	  //BSP_LED_Toggle(LED1);
-	  //HAL_Delay (500);
-	  //BSP_LED_Toggle(LED2);
-	  //BSP_LED_Toggle(LED3);
-	  //HAL_Delay (500);
+
 
   /* USER CODE END WHILE */
 
@@ -223,6 +217,7 @@ static void MX_SAI1_Init(void)
   hsai_BlockA1.Init.Synchro = SAI_ASYNCHRONOUS;
   hsai_BlockA1.Init.OutputDrive = SAI_OUTPUTDRIVE_DISABLE;
   hsai_BlockA1.Init.FIFOThreshold = SAI_FIFOTHRESHOLD_EMPTY;
+  //?? Check why 96K to get effective 48k
   hsai_BlockA1.Init.AudioFrequency = SAI_AUDIO_FREQUENCY_96K;
   hsai_BlockA1.Init.SynchroExt = SAI_SYNCEXT_DISABLE;
   hsai_BlockA1.Init.MonoStereoMode = SAI_STEREOMODE;
@@ -250,14 +245,14 @@ static void MX_SAI1_Init(void)
   {
     Error_Handler();
   }
-  //?? Align with SAI_A when working
+
   hsai_BlockB1.Instance = SAI1_Block_B;
   hsai_BlockB1.Init.Protocol = SAI_SPDIF_PROTOCOL;
   hsai_BlockB1.Init.AudioMode = SAI_MODEMASTER_TX;
   hsai_BlockB1.Init.Synchro = SAI_ASYNCHRONOUS;
   hsai_BlockB1.Init.OutputDrive = SAI_OUTPUTDRIVE_DISABLE;
   hsai_BlockB1.Init.FIFOThreshold = SAI_FIFOTHRESHOLD_EMPTY;
-  hsai_BlockB1.Init.AudioFrequency = SAI_AUDIO_FREQUENCY_48K;
+  hsai_BlockB1.Init.AudioFrequency = SAI_AUDIO_FREQUENCY_96K;
   hsai_BlockB1.Init.SynchroExt = SAI_SYNCEXT_DISABLE;
   hsai_BlockB1.Init.MonoStereoMode = SAI_STEREOMODE;
   hsai_BlockB1.Init.CompandingMode = SAI_NOCOMPANDING;

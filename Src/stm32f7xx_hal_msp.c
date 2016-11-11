@@ -175,7 +175,7 @@ void HAL_SAI_MspInit(SAI_HandleTypeDef* hsai)
     hdma_sai1_b.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
     hdma_sai1_b.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
     hdma_sai1_b.Init.Mode = DMA_NORMAL;
-    hdma_sai1_b.Init.Priority = DMA_PRIORITY_LOW;
+    hdma_sai1_b.Init.Priority = DMA_PRIORITY_HIGH;
     hdma_sai1_b.Init.FIFOMode = DMA_FIFOMODE_ENABLE;
     hdma_sai1_b.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_FULL;
     hdma_sai1_b.Init.MemBurst = DMA_MBURST_SINGLE;
