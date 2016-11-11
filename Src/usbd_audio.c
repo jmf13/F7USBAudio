@@ -443,8 +443,7 @@ static uint8_t  USBD_AUDIO_Init (USBD_HandleTypeDef *pdev,
                            haudio->buffer,
                            AUDIO_OUT_PACKET+4);
   }
-  //??
- 	BSP_LED_On(LED2);
+
   return USBD_OK;
 }
 
@@ -659,14 +658,10 @@ static uint8_t  USBD_AUDIO_SOF (USBD_HandleTypeDef *pdev)
 	// every SOF_RATE, we send the feedback data to the host
 	// Feedback value is calculated in USBD_AUDIO_Sync, when data are pulled by program
 
-	//?? Test purpose
-	//??BSP_LED_Toggle(LED3);
 	SOF_num++;
         if (SOF_num==(1<<SOF_RATE))
 	      {
 	       SOF_num=0;
-	       //?? Test purpose
-	       //feedback_data = NOMINAL_FEEDBACK;
 	       feedbacktable[0] = feedback_data;
 	       feedbacktable[1] = feedback_data >> 8;
 	       feedbacktable[2] = feedback_data >> 16;
@@ -711,11 +706,11 @@ void  USBD_AUDIO_DataPull (USBD_HandleTypeDef *pdev)
 		        //feedback_data =0x0C0666+128;
 				BSP_LED_Off(LED1);
 				BSP_LED_Off(LED1);
-				BSP_LED_Off(LED2);
+				BSP_LED_On(LED2);
 				}
 			else if (gap < SPK1_GAP_L1) { 			// gap < outer lower bound => 2*FB_RATE_DELTA
 				feedback_data =0x0C0666;
-				BSP_LED_Off(LED3);
+				//BSP_LED_Off(LED3);
 				BSP_LED_On(LED1);
 				BSP_LED_Off(LED2);
 			}
@@ -723,23 +718,22 @@ void  USBD_AUDIO_DataPull (USBD_HandleTypeDef *pdev)
 			else if (gap > SPK1_GAP_U2) { 		// gap < inner lower bound => 1*FB_RATE_DELTA
 				//feedback_data =0x0BF99A-128;
 				//BSP_LED_Off(LED3);
-				BSP_LED_Off(LED3);
+				BSP_LED_On(LED3);
 				BSP_LED_Off(LED2);
 				BSP_LED_Off(LED1);
 			}
 			else if (gap > SPK1_GAP_U1) { 		// gap < inner lower bound => 1*FB_RATE_DELTA
-				//??
 				feedback_data = 0x0BF99A;
 				//feedback_data = 0x0BE000;
 				BSP_LED_Off(LED1);
-				BSP_LED_On(LED3);
-				BSP_LED_Off(LED2);
+				//BSP_LED_On(LED3);
+				BSP_LED_On(LED2);
 			}
 
 			else {		// Go back to indicating feedback system on module LEDs
 				BSP_LED_Off(LED1);
-				BSP_LED_On(LED2);
-				BSP_LED_Off(LED3);
+				BSP_LED_Off(LED2);
+				//BSP_LED_Off(LED3);
 			}
 //  } else {
 	  // If not for ex in the case no more data are streamed, but we empty the buffer, then
@@ -795,9 +789,8 @@ void  USBD_AUDIO_DataPull (USBD_HandleTypeDef *pdev)
   //calculate length in buffer
   //if more data than the buffer size then return buffer
   //if not enougth data then stop Player
-  //if (gap > AUDIO_OUTPUT_BUF_SIZE) {
+  if (gap > AUDIO_OUTPUT_BUF_SIZE) {
     // return a pointer to the buffer and length for Size
-	  //??
 
     ((USBD_AUDIO_ItfTypeDef *)pdev->pUserData)->AudioCmd(&haudio->buffer[haudio->rd_ptr],
     																			AUDIO_OUTPUT_BUF_SIZE*2,
@@ -811,23 +804,21 @@ void  USBD_AUDIO_DataPull (USBD_HandleTypeDef *pdev)
       //BSP_LED_Toggle(LED2);
     }
 
-  //} else {
+  } else {
 
 	// Stop streaming
 	// Command to go to stopping mode with last data to play
+	((USBD_AUDIO_ItfTypeDef *)pdev->pUserData)->AudioCmd(&haudio->buffer[haudio->rd_ptr],gap*2, AUDIO_CMD_STOP);
+	PlayFlag = 0;
 
-	//?? For test: no sto in cas of low buffer
-	//((USBD_AUDIO_ItfTypeDef *)pdev->pUserData)->AudioCmd(&haudio->buffer[haudio->rd_ptr],gap*2, AUDIO_CMD_STOP);
-	//PlayFlag = 0;
 	//Reset the buffer to be ready for new stream of data from the host
-	//!! This is the only place where wr_ptr is touched out of DataOut.
-
-	//haudio->rd_ptr = 0;
-	//haudio->wr_ptr = 0;
-	//haudio->rd_enable = 0;
+	//!! This is the only place where wr_ptr is touched out of DataOut
+	haudio->rd_ptr = 0;
+	haudio->wr_ptr = 0;
+	haudio->rd_enable = 0;
 	//BSP_LED_On(LED3);
 
- // }
+ }
   
 }
 
@@ -840,7 +831,6 @@ void  USBD_AUDIO_DataPull (USBD_HandleTypeDef *pdev)
   */
 static uint8_t  USBD_AUDIO_IsoINIncomplete (USBD_HandleTypeDef *pdev, uint8_t epnum)
 {
-    //?? test
 	PCD_HandleTypeDef *hpcd = (PCD_HandleTypeDef *)pdev->pData;
 	USB_OTG_GlobalTypeDef *USBx = hpcd->Instance;
     //?? initial attempt
@@ -854,12 +844,10 @@ static uint8_t  USBD_AUDIO_IsoINIncomplete (USBD_HandleTypeDef *pdev, uint8_t ep
     //??
     //USBx_INEP(AUDIO_IN_EP&0x7f)->DIEPCTL |= (USB_OTG_DIEPCTL_CNAK | USB_OTG_DIEPCTL_EPENA);
 
-    //??Test purpose
     feedbacktable[0] = feedback_data;
     feedbacktable[1] = feedback_data >> 8;
     feedbacktable[2] = feedback_data >> 16;
 
-    //?? For test purpose, not to retransmit the feedback
     USBD_LL_Transmit(pdev, AUDIO_IN_EP, (uint8_t *) &feedbacktable, 3);
 
     SOF_num=0;
@@ -935,9 +923,6 @@ static uint8_t  USBD_AUDIO_DataOut (USBD_HandleTypeDef *pdev, uint8_t epnum)
 	           if ((curr_length)>0)
 	           {memcpy((uint8_t*)&haudio->buffer[haudio->wr_ptr],(uint8_t *)(&tmpbuf[0]+rest),curr_length);
 	           haudio->wr_ptr+=curr_length;};
-
-	           //??
-	           //BSP_LED_Toggle(LED3);
 	           }
 	           else
 	           {
@@ -970,7 +955,6 @@ static uint8_t  USBD_AUDIO_DataOut (USBD_HandleTypeDef *pdev, uint8_t epnum)
         		// Move the read pointer forward of number of transmitted samples
         		haudio->rd_ptr = (haudio->rd_ptr+ AUDIO_OUTPUT_BUF_SIZE*2)%(AUDIO_TOTAL_BUF_SIZE*2);
         		PlayFlag = 1;
-        		//??BSP_LED_Off(LED3);
         	}
     	  }
 

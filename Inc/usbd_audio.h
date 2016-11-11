@@ -105,7 +105,8 @@
 //!!! The size of the AUDIO_TOTAL_BUF_SIZE must be a multiple of AUDIO_OUTPUT_BUF_SIZE
 // in order to always be able to send a sequential buffer to the application (no ring
 // buffer rounding)
-#define AUDIO_OUTPUT_BUF_SIZE 1024              	  // Audio buffer size for each channel, in samples
+//??
+#define AUDIO_OUTPUT_BUF_SIZE 128              	  // Audio buffer size for each channel, in samples
 #define AUDIO_TOTAL_BUF_SIZE AUDIO_OUTPUT_BUF_SIZE*8  // We want to work between 3/8 and 5/8 buffer
     /* Audio Commands enumeration */
 typedef enum

@@ -47,7 +47,6 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "usbd_audio_if.h"
-//#include "stm32f4_discovery_audio.h"
 #include "dsp.h"
 
 /* Private typedef -----------------------------------------------------------*/
@@ -68,8 +67,6 @@ typedef enum
 /* Private define ------------------------------------------------------------*/
 
 /* Private macro -------------------------------------------------------------*/
-//## #define FB_RATE_DELTA (1<<12)
-//## #define FB_RATE_DELTA 64
 
 
 /* Private function prototypes -----------------------------------------------*/
@@ -105,8 +102,12 @@ volatile PLAYER_STATE_TypeDef player_state = PLAYER_STOPPED;
 //?? Test with Word and word transfer
 //int16_t Audio_output_buffer[AUDIO_OUTPUT_BUF_SIZE * 2];  // This represents two buffers in ping pong arrangement stereo samples
 int32_t Audio_output_buffer[AUDIO_OUTPUT_BUF_SIZE * 2];  // This represents two buffers in ping pong arrangement stereo samples
-int16_t Audio_buffer_L[AUDIO_OUTPUT_BUF_SIZE/2]; //one ping pong buffer, Left channel
-int16_t Audio_buffer_R[AUDIO_OUTPUT_BUF_SIZE/2]; //one ping pong buffer, Right channel
+//??int16_t Audio_buffer_L[AUDIO_OUTPUT_BUF_SIZE/2]; //one ping pong buffer, Left channel
+//??int16_t Audio_buffer_R[AUDIO_OUTPUT_BUF_SIZE/2]; //one ping pong buffer, Right channel
+int16_t Audio_buffer_1[AUDIO_OUTPUT_BUF_SIZE/2]; //one ping pong buffer, Channel 1
+int16_t Audio_buffer_2[AUDIO_OUTPUT_BUF_SIZE/2]; //one ping pong buffer, Channel 2
+int16_t Audio_buffer_3[AUDIO_OUTPUT_BUF_SIZE/2]; //one ping pong buffer, Channel 3
+int16_t Audio_buffer_4[AUDIO_OUTPUT_BUF_SIZE/2]; //one ping pong buffer, Channel 4
 
 extern USBD_HandleTypeDef hUsbDeviceFS;
 extern SAI_HandleTypeDef hsai_BlockA1;
@@ -388,7 +389,7 @@ switch(player_state)
    }
 }
 
-//size in in int_16
+//size in int_16
 void fill_buffer (int buffer, uint8_t *pbuf, uint32_t size) // buffer=0 for first half of the buffer buffer = 1 for second half
 {
 	int i=0;
@@ -398,8 +399,8 @@ void fill_buffer (int buffer, uint8_t *pbuf, uint32_t size) // buffer=0 for firs
 	   // The size is in bytes, we need to read 2xInt16 at each loop exec
 	   // So the loop has to be performed on size/2
 	   for(i=0; i<size/2; i++){
-			Audio_buffer_L[i]= *pbuf_uint16++;
-			Audio_buffer_R[i]= *pbuf_uint16++;
+			Audio_buffer_1[i]= *pbuf_uint16++;
+			Audio_buffer_3[i]= *pbuf_uint16++;
 
 		}
 
@@ -415,9 +416,16 @@ void fill_buffer (int buffer, uint8_t *pbuf, uint32_t size) // buffer=0 for firs
 		// Build stereo Audio_output_buffer from Audio_buffer_L and Audio_buffer_R, filling the requested
 		// ping pong buffer: first half offset 0 or second half offset AUDIO_OUTPUT_BUFF_SIZE
 
+	    dsp((int16_t*)&Audio_buffer_1[0], (int16_t*)&Audio_buffer_1[0], (int16_t*)&Audio_buffer_2[0], size/2, 0);
+	   	//dsp((int16_t*)&Audio_buffer_3[0], (int16_t*)&Audio_buffer_3[0], (int16_t*)&Audio_buffer_4[0], size/2, 1);
+
+	    if (size != AUDIO_OUTPUT_BUF_SIZE){
+	    	BSP_LED_Toggle(LED3);
+	    }
+
 	    for(i=0; i<size/2; i++){
-			 Audio_output_buffer[AUDIO_OUTPUT_BUF_SIZE*buffer+2*i]= (((int32_t)Audio_buffer_L[i]) <<8); /*Left Channel*/
-			 Audio_output_buffer[AUDIO_OUTPUT_BUF_SIZE*buffer+2*i + 1]= (((int32_t)Audio_buffer_R[i]) <<8); /*Right Channel*/
+			 Audio_output_buffer[AUDIO_OUTPUT_BUF_SIZE*buffer+2*i]= (((int32_t)Audio_buffer_1[i]) <<8); /*Left Channel*/
+			 Audio_output_buffer[AUDIO_OUTPUT_BUF_SIZE*buffer+2*i + 1]= (((int32_t)Audio_buffer_2[i]) <<8); /*Right Channel*/
 		}
 
 		// if the buffer to fill is the 2nd half and it is an incomplete buffer

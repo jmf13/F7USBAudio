@@ -108,7 +108,7 @@ int main(void)
   MX_SAI1_Init();
   MX_USB_DEVICE_Init();
 
-  BSP_LED_On(LED3);
+  //?? BSP_LED_On(LED3);
 
 
 

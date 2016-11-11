@@ -5,3 +5,6 @@
 /objects.list
 /objects.mk
 /sources.mk
+/F7USBAudio.bin
+/F7USBAudio.elf
+/output.map

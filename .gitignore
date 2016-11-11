@@ -1,0 +1,4 @@
+/F7USBAudio.ioc
+/MXmainAndJMF.c
+/MXusbd_audio_if.c
+/STM32F746ZGTx_FLASH.ld
