@@ -42,7 +42,8 @@
 ** This part is the only part to modify for the specific application
 ** ------------------------------------------------------------------- */
 
-#define SCALE_INPUT		1	//scaling factor applied to input buffer
+//?? Test scale factor of 0.3
+#define SCALE_INPUT			0.1 //scaling factor applied to input buffer
 
 #define NUMSTAGES_FILTER1	2	//number of biquads in this filter
 float32_t coeffTableFilter1[5*NUMSTAGES_FILTER1] = {
@@ -91,10 +92,6 @@ float32_t coeffTableFilter3[5*NUMSTAGES_FILTER3] = {
 #define SCALE_OUTPUT2_4	pow(10,SCALE_OUTPUT2_4_dB/20)
 
 
-//?? check if we can rely on size parameter or constant Local buffer size is AUDIO_OUTPUT_BUFF_SIZE/2
-//#define BLOCKSIZE    512
-
-
 /* ----------------------------------------------------------------------
 ** Instance structures and state buffers for biquads cascades associated 
 ** to the different filters 
@@ -137,7 +134,7 @@ void dsp(int16_t* buffer_input, int16_t* buffer_outputA, int16_t* buffer_outputB
 	// ?? check if needed
 	//float32_t *biquadStatef32;
 
-	if (channel == 0){
+	/*if (channel == 0){
 		F1 = &F1L;
 		F2 = &F2L;
 		F3 = &F3L;
@@ -147,13 +144,13 @@ void dsp(int16_t* buffer_input, int16_t* buffer_outputA, int16_t* buffer_outputB
 		F1 = &F1R;
 		F2 = &F2R;
 		F3 = &F3R;
-	};
+	};*/
 	
 
 	/* ----------------------------------------------------------------------
 	** Convert block of input data from float to Q31
 	** ------------------------------------------------------------------- */
-	arm_q15_to_float(buffer_input, inputf32, size);
+	//arm_q15_to_float(buffer_input, inputf32, size);
 	
 	/* ----------------------------------------------------------------------
 	** Scale  by SCALE_INPUT.  This provides additional headroom so that the
@@ -161,46 +158,53 @@ void dsp(int16_t* buffer_input, int16_t* buffer_outputA, int16_t* buffer_outputB
 	** ?? This is to be checked
 	** ------------------------------------------------------------------- */
 	if (SCALE_INPUT != 1) {
-		arm_scale_f32(inputf32, SCALE_INPUT,inputf32, size);
+		//arm_scale_f32(inputf32, SCALE_INPUT,inputf32, size);
 	}
 	
 	/* ----------------------------------------------------------------------
 	** Apply F1 to the input
 	** ------------------------------------------------------------------- */
-	arm_biquad_cascade_df1_f32(F1, inputf32, inputf32, size);
+	//arm_biquad_cascade_df1_f32(F1, inputf32, inputf32, size);
 
 	/* ----------------------------------------------------------------------
 	** Apply F2 to the result - creates a new filter "branch"
 	** ------------------------------------------------------------------- */
-	arm_biquad_cascade_df1_f32(F2, inputf32, outputf32, size);
 
-	if (SCALE_OUTPUT1_3 != 1) {
-		arm_scale_f32(outputf32, SCALE_OUTPUT1_3,outputf32, size);
+	if (SCALE_OUTPUT1_3_dB != 0) {
+		//arm_scale_f32(inputf32, SCALE_OUTPUT1_3,outputf32, size);
+		//arm_biquad_cascade_df1_f32(F2, outputf32, outputf32, size);
+	} else {
+		//arm_biquad_cascade_df1_f32(F2, inputf32, outputf32, size);
 	}
 
 	if (INVERT_OUTPUT1_3) {
-		arm_negate_f32 (outputf32,outputf32, size);
+		//arm_negate_f32 (outputf32,outputf32, size);
 	}
 
 	/* ----------------------------------------------------------------------
 	** Apply F3 to the result of F1 - prolonging the existing filter "branch"
 	** ------------------------------------------------------------------- */
-	arm_biquad_cascade_df1_f32(F3, inputf32, inputf32, size);
 
-	if (SCALE_OUTPUT2_4 != 1) {
-		arm_scale_f32(inputf32, SCALE_OUTPUT2_4,inputf32, size);
+	if (SCALE_OUTPUT2_4_dB != 0) {
+		//arm_scale_f32(inputf32, SCALE_OUTPUT2_4,inputf32, size);
 	}
 
+	//arm_biquad_cascade_df1_f32(F3, inputf32, inputf32, size);
+
 	if (INVERT_OUTPUT2_4) {
-		arm_negate_f32 (inputf32,inputf32, size);
+		//arm_negate_f32 (inputf32,inputf32, size);
 	}
 
 
 	/* ----------------------------------------------------------------------
 	** Convert float results of both filter branches back to Q15
 	** ------------------------------------------------------------------- */
-	arm_float_to_q15(inputf32,  buffer_outputA, size);
-	arm_float_to_q15(outputf32, buffer_outputB, size);
+	//arm_float_to_q15(inputf32,  buffer_outputA, size);
+	//??arm_float_to_q15(outputf32, buffer_outputB, size);
+	//arm_float_to_q15(inputf32, buffer_outputB, size);
+
+	//memcpy(buffer_outputA,buffer_input,size);
+	memcpy(buffer_outputB,buffer_input,size*2);
 
 }
 

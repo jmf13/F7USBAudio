@@ -99,7 +99,9 @@ void HAL_SAI_MspInit(SAI_HandleTypeDef* hsai)
        __HAL_RCC_SAI1_CLK_ENABLE();
 
     /* Peripheral interrupt init*/
-    HAL_NVIC_SetPriority(SAI1_IRQn, 0, 0);
+    //??
+    //HAL_NVIC_SetPriority(SAI1_IRQn, 0, 0);
+    HAL_NVIC_SetPriority(SAI1_IRQn, 2, 0);
     HAL_NVIC_EnableIRQ(SAI1_IRQn);
     }
     SAI1_client ++;
@@ -124,7 +126,8 @@ void HAL_SAI_MspInit(SAI_HandleTypeDef* hsai)
     //?? Test with word instead of halfword
     hdma_sai1_a.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
     hdma_sai1_a.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
-    hdma_sai1_a.Init.Mode = DMA_NORMAL;
+    //??
+    hdma_sai1_a.Init.Mode = DMA_CIRCULAR;
     hdma_sai1_a.Init.Priority = DMA_PRIORITY_HIGH;
     hdma_sai1_a.Init.FIFOMode = DMA_FIFOMODE_ENABLE;
     hdma_sai1_a.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_FULL;
@@ -150,7 +153,9 @@ void HAL_SAI_MspInit(SAI_HandleTypeDef* hsai)
        __HAL_RCC_SAI1_CLK_ENABLE();
 
       /* Peripheral interrupt init*/
-      HAL_NVIC_SetPriority(SAI1_IRQn, 0, 0);
+      //??
+      //HAL_NVIC_SetPriority(SAI1_IRQn, 0, 0);
+      HAL_NVIC_SetPriority(SAI1_IRQn, 2, 0);
       HAL_NVIC_EnableIRQ(SAI1_IRQn);
       }
     SAI1_client ++;
@@ -174,7 +179,8 @@ void HAL_SAI_MspInit(SAI_HandleTypeDef* hsai)
     hdma_sai1_b.Init.MemInc = DMA_MINC_ENABLE;
     hdma_sai1_b.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
     hdma_sai1_b.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
-    hdma_sai1_b.Init.Mode = DMA_NORMAL;
+    //??
+    hdma_sai1_b.Init.Mode = DMA_CIRCULAR;
     hdma_sai1_b.Init.Priority = DMA_PRIORITY_HIGH;
     hdma_sai1_b.Init.FIFOMode = DMA_FIFOMODE_ENABLE;
     hdma_sai1_b.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_FULL;

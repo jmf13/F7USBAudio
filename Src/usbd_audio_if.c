@@ -118,7 +118,7 @@ extern SAI_HandleTypeDef hsai_BlockB1;
 // variables to keep as global variables the information about the buffer 
 // pulled from the usbd_audio
 
-uint8_t* pbuf_input;
+volatile uint8_t* pbuf_input;
 volatile uint32_t buf_input_size;
 
 // Size of the output buffer
@@ -126,6 +126,8 @@ volatile uint32_t Audio_output_buffer_size =0;
 
 //variable for next output buffer to write - 2 means no buffer to fill (wait state)
 volatile NEXT_BUFFER_TypeDef next_buff = NEXT_BUFFER_NO;
+
+volatile int test_sequence = 3;
 
 HAL_StatusTypeDef ErrorCode;
 
@@ -144,13 +146,29 @@ void Audio_Loop (void)
 	  switch(next_buff) {
   
   	    case NEXT_BUFFER_0:
+  	      if (test_sequence != 0) {
+  	    	  BSP_LED_On(LED3);
+  	    	  while(1);
+  	      }
+  	      //??
+  	      test_sequence = 3;
   	      fill_buffer (0, pbuf_input, buf_input_size);
 	      next_buff = NEXT_BUFFER_NO;
+	      //??
+	      test_sequence = 1;
 	      break;
 
 	    case NEXT_BUFFER_1:
+	    	//??
+	    	if (test_sequence != 1) {
+	    	  	BSP_LED_On(LED3);
+	    	  	while(1);
+	    	}
+	    	test_sequence = 3;
 	      fill_buffer (1, pbuf_input, buf_input_size);
 	      next_buff = NEXT_BUFFER_NO;
+	      //??
+	      test_sequence = 0;
 	      break;
     
 	    case NEXT_BUFFER_NO:
@@ -212,6 +230,7 @@ static int8_t Audio_PlaybackCmd(uint8_t *pbuf, uint32_t size, uint8_t cmd)
 
 	  	// Size in bytes, for a complete buffer
 		// BSP_AUDIO_OUT_SetMute(AUDIO_MUTE_OFF);
+
 		ErrorCode = HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t *)Audio_output_bufferA, AUDIO_OUTPUT_BUF_SIZE*2);
 		if( ErrorCode != 0){
 			while(1);
@@ -226,6 +245,8 @@ static int8_t Audio_PlaybackCmd(uint8_t *pbuf, uint32_t size, uint8_t cmd)
 	    Audio_output_buffer_size = 0;
 
 	    USBD_AUDIO_DataPull (&hUsbDeviceFS);
+	    //??
+	    test_sequence = 1;
 	    next_buff = NEXT_BUFFER_1;
 	  	player_state = PLAYER_STARTED;
     break;
@@ -304,19 +325,29 @@ void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *hsai)
  switch(player_state)
   {
     case PLAYER_STARTED:
-	  //start playing the prepared buffer
+    	//??
+    	if (test_sequence != 1) {
+    	  BSP_LED_On(LED3);
+    	  while(1);
+    	}
+      //start playing the prepared buffer
 
-      if( HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t *)Audio_output_bufferA, AUDIO_OUTPUT_BUF_SIZE*2)!= 0){
+      /*if( HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t *)Audio_output_bufferA, AUDIO_OUTPUT_BUF_SIZE*2)!= 0){
     	while(1);
       }
       if( HAL_SAI_Transmit_DMA(&hsai_BlockB1, (uint8_t *)Audio_output_bufferB, AUDIO_OUTPUT_BUF_SIZE*2)!= 0){
           BSP_LED_On(LED3);
     	  while(1);
-            }
+            } */
 
 	  //Pull_Data from USBD_Audio - note that data are provided by USBD_Audio using the Audio_PlaybackCmd callback
 	  USBD_AUDIO_DataPull (&hUsbDeviceFS);
 	  next_buff = NEXT_BUFFER_1;
+	  if (Audio_output_buffer_size != AUDIO_OUTPUT_BUF_SIZE*2){
+	  	    	BSP_LED_Toggle(LED3);
+	  	    	while(1);
+	  	    }
+
 	  Audio_output_buffer_size = 0;
       break;
     //?? See how to fill buffer with zeros to complement the incomplete buffer
@@ -359,6 +390,11 @@ if (hsai== &hsai_BlockB1){
 switch(player_state)
   {
     case PLAYER_STARTED:
+    	//??
+    	    	if (test_sequence != 0) {
+    	    	  BSP_LED_On(LED3);
+    	    	  while(1);
+    	    	}
 	//Pull_Data from USBD_Audio - note that data are provided by USBD_Audio using the Audio_PlaybackCmd callback
 	USBD_AUDIO_DataPull (&hUsbDeviceFS);
 	next_buff = NEXT_BUFFER_0;
@@ -379,6 +415,10 @@ switch(player_state)
 void fill_buffer (int buffer, uint8_t *pbuf, uint32_t size) // buffer=0 for first half of the buffer buffer = 1 for second half
 {
 	int i=0;
+
+	//??Test
+	volatile uint32_t test_size = size;
+
 	// This is needed to translate the bytes buffer from usbd_audio in int_16 music data
 	uint16_t * pbuf_uint16 = (uint16_t *)pbuf;
 
@@ -393,30 +433,36 @@ void fill_buffer (int buffer, uint8_t *pbuf, uint32_t size) // buffer=0 for firs
 		// Build stereo Audio_output_buffer from Audio_buffer_L and Audio_buffer_R, filling the requested
 		// ping pong buffer: first half offset 0 or second half offset AUDIO_OUTPUT_BUFF_SIZE
 
-	    dsp((int16_t*)&Audio_buffer_1[0], (int16_t*)&Audio_buffer_1[0], (int16_t*)&Audio_buffer_2[0], size/2, 0);
+	    //dsp((int16_t*)&Audio_buffer_1[0], (int16_t*)&Audio_buffer_1[0], (int16_t*)&Audio_buffer_2[0], size/2, 0);
 	   	dsp((int16_t*)&Audio_buffer_3[0], (int16_t*)&Audio_buffer_3[0], (int16_t*)&Audio_buffer_4[0], size/2, 1);
 
 	    if (size != AUDIO_OUTPUT_BUF_SIZE){
 	    	BSP_LED_Toggle(LED3);
+	    	while(1);
 	    }
 
 	    for(i=0; i<size/2; i++){
-			 Audio_output_bufferA[AUDIO_OUTPUT_BUF_SIZE*buffer+2*i]= (((int32_t)Audio_buffer_2[i]) <<8); /*Left Channel - filter1+2*/
-			 Audio_output_bufferA[AUDIO_OUTPUT_BUF_SIZE*buffer+2*i + 1]= (((int32_t)Audio_buffer_1[i]) <<8); /*Left Channel - filter1+3*/
-			 Audio_output_bufferB[AUDIO_OUTPUT_BUF_SIZE*buffer+2*i]= (((int32_t)Audio_buffer_4[i]) <<8); /*Right Channel - filter 1+2*/
-			 Audio_output_bufferB[AUDIO_OUTPUT_BUF_SIZE*buffer+2*i + 1]= (((int32_t)Audio_buffer_3[i]) <<8); /*Right Channel - filter 1+3*/
+	    	Audio_output_bufferA[AUDIO_OUTPUT_BUF_SIZE*buffer+2*i]= (((int32_t)Audio_buffer_2[i]) <<8); /*Left Channel - filter1+2*/
+			Audio_output_bufferA[AUDIO_OUTPUT_BUF_SIZE*buffer+2*i + 1]= (((int32_t)Audio_buffer_1[i]) <<8); /*Left Channel - filter1+3*/
+			Audio_output_bufferB[AUDIO_OUTPUT_BUF_SIZE*buffer+2*i]= (((int32_t)Audio_buffer_4[i]) <<8); /*Right Channel - filter 1+2*/
+			Audio_output_bufferB[AUDIO_OUTPUT_BUF_SIZE*buffer+2*i + 1]= (((int32_t)Audio_buffer_3[i]) <<8); /*Right Channel - filter 1+3*/
+
 		}
 
 		// if the buffer to fill is the 2nd half and it is an incomplete buffer
 		// then we have to fill with zeros as the playback has already started and is difficult to stop
-		if ((buffer==1)&&(size < AUDIO_OUTPUT_BUF_SIZE )){
+		//??
+	    if ((buffer==1)&&(size < AUDIO_OUTPUT_BUF_SIZE )){
 			for(i=size; i<AUDIO_OUTPUT_BUF_SIZE; i++){
+				//??
+				//BSP_LED_On(LED3);
+				//while(1);
 				Audio_output_bufferA[AUDIO_OUTPUT_BUF_SIZE*buffer+i]= 0;
 				Audio_output_bufferB[AUDIO_OUTPUT_BUF_SIZE*buffer+i]= 0;
 			}
 		}
 
-		Audio_output_buffer_size = Audio_output_buffer_size + size;
+		Audio_output_buffer_size += size;
 
 }
 

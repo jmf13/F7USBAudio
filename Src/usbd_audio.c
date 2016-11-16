@@ -894,12 +894,12 @@ static uint8_t  USBD_AUDIO_DataOut (USBD_HandleTypeDef *pdev, uint8_t epnum)
 	 	  };
 	  if (curr_length==AUDIO_OUT_PACKET+4) {
 	 		  BSP_LED_On(LED3);
-	 	  };
+	 	  }; */
 	  if (curr_length > AUDIO_OUT_PACKET+4) {
 		  BSP_LED_On(LED3);
 	 	  };
 
-	  if (curr_length == AUDIO_OUT_PACKET) {
+	  /* if (curr_length == AUDIO_OUT_PACKET) {
 		  	  BSP_LED_Off(LED2);
 		  	  BSP_LED_Off(LED3);
 	  	 	  }; */
@@ -932,7 +932,14 @@ static uint8_t  USBD_AUDIO_DataOut (USBD_HandleTypeDef *pdev, uint8_t epnum)
 	           haudio->wr_ptr += curr_length;};
 	           }
 	  //roll back when buffer is full is the ring buffer filling just arrived at the end of ring buffer
-	  if (haudio->wr_ptr >= AUDIO_TOTAL_BUF_SIZE*2)
+	  //??
+	  if (haudio->wr_ptr > AUDIO_TOTAL_BUF_SIZE*2) {
+		  BSP_LED_On(LED3);
+		  while (1);
+	  }
+
+	  //??if (haudio->wr_ptr >= AUDIO_TOTAL_BUF_SIZE*2)
+	  if (haudio->wr_ptr == AUDIO_TOTAL_BUF_SIZE*2)
 	        	   haudio->wr_ptr = 0;
 
 	  
