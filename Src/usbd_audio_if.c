@@ -100,13 +100,9 @@ volatile PLAYER_STATE_TypeDef player_state = PLAYER_STOPPED;
 
 /* Exported variables --------------------------------------------------------*/
 
-int32_t Audio_output_bufferA[AUDIO_OUTPUT_BUF_SIZE * 2];  // This represents two buffers in ping pong arrangement stereo samples
-int32_t Audio_output_bufferB[AUDIO_OUTPUT_BUF_SIZE * 2];  // This represents two buffers in ping pong arrangement stereo samples
+uint32_t Audio_output_bufferA[AUDIO_OUTPUT_BUF_SIZE * 2];  // This represents two buffers in ping pong arrangement stereo samples
+uint32_t Audio_output_bufferB[AUDIO_OUTPUT_BUF_SIZE * 2];  // This represents two buffers in ping pong arrangement stereo samples
 
-int16_t Audio_buffer_1[AUDIO_OUTPUT_BUF_SIZE/2]; //one ping pong buffer, Channel 1
-int16_t Audio_buffer_2[AUDIO_OUTPUT_BUF_SIZE/2]; //one ping pong buffer, Channel 2
-int16_t Audio_buffer_3[AUDIO_OUTPUT_BUF_SIZE/2]; //one ping pong buffer, Channel 3
-int16_t Audio_buffer_4[AUDIO_OUTPUT_BUF_SIZE/2]; //one ping pong buffer, Channel 4
 
 extern USBD_HandleTypeDef hUsbDeviceFS;
 extern SAI_HandleTypeDef hsai_BlockA1;
@@ -416,6 +412,14 @@ void fill_buffer (int buffer, uint8_t *pbuf, uint32_t size) // buffer=0 for firs
 {
 	int i=0;
 
+	uint16_t Audio_buffer_1[AUDIO_OUTPUT_BUF_SIZE/2]; //one ping pong buffer, Channel 1
+	uint16_t Audio_buffer_2[AUDIO_OUTPUT_BUF_SIZE/2]; //one ping pong buffer, Channel 2
+	uint16_t Audio_buffer_3[AUDIO_OUTPUT_BUF_SIZE/2]; //one ping pong buffer, Channel 3
+	uint16_t Audio_buffer_4[AUDIO_OUTPUT_BUF_SIZE/2]; //one ping pong buffer, Channel 4
+	uint16_t Audio_buffer_input_L[AUDIO_OUTPUT_BUF_SIZE/2];
+    uint16_t Audio_buffer_input_R[AUDIO_OUTPUT_BUF_SIZE/2];
+
+
 	//??Test
 	volatile uint32_t test_size = size;
 
@@ -425,16 +429,20 @@ void fill_buffer (int buffer, uint8_t *pbuf, uint32_t size) // buffer=0 for firs
 	   // The size is in bytes, we need to read 2xInt16 at each loop exec
 	   // So the loop has to be performed on size/2
 	   for(i=0; i<size/2; i++){
-			Audio_buffer_1[i]= *pbuf_uint16++;
-			Audio_buffer_3[i]= *pbuf_uint16++;
+		   Audio_buffer_input_L[i]= *pbuf_uint16++;
+		   Audio_buffer_input_R[i]= *pbuf_uint16++;
 
 		}
 
 		// Build stereo Audio_output_buffer from Audio_buffer_L and Audio_buffer_R, filling the requested
 		// ping pong buffer: first half offset 0 or second half offset AUDIO_OUTPUT_BUFF_SIZE
 
-	    //dsp((int16_t*)&Audio_buffer_1[0], (int16_t*)&Audio_buffer_1[0], (int16_t*)&Audio_buffer_2[0], size/2, 0);
-	   	dsp((int16_t*)&Audio_buffer_3[0], (int16_t*)&Audio_buffer_3[0], (int16_t*)&Audio_buffer_4[0], size/2, 1);
+	    //dsp((int16_t*)&Audio_buffer_input_L[0], (int16_t*)&Audio_buffer_1[0], (int16_t*)&Audio_buffer_2[0], size/2, 0);
+	   	//dsp((int16_t*)&Audio_buffer_input_R[0], (int16_t*)&Audio_buffer_3[0], (int16_t*)&Audio_buffer_4[0], size/2, 1);
+
+	   	//?? to test out of DSP
+		//memcpy(&Audio_buffer_3[0],&Audio_buffer_input_R[0],size);
+		//memcpy(&Audio_buffer_4[0],&Audio_buffer_input_R[0],size);
 
 	    if (size != AUDIO_OUTPUT_BUF_SIZE){
 	    	BSP_LED_Toggle(LED3);
@@ -442,12 +450,18 @@ void fill_buffer (int buffer, uint8_t *pbuf, uint32_t size) // buffer=0 for firs
 	    }
 
 	    for(i=0; i<size/2; i++){
-	    	Audio_output_bufferA[AUDIO_OUTPUT_BUF_SIZE*buffer+2*i]= (((int32_t)Audio_buffer_2[i]) <<8); /*Left Channel - filter1+2*/
-			Audio_output_bufferA[AUDIO_OUTPUT_BUF_SIZE*buffer+2*i + 1]= (((int32_t)Audio_buffer_1[i]) <<8); /*Left Channel - filter1+3*/
-			Audio_output_bufferB[AUDIO_OUTPUT_BUF_SIZE*buffer+2*i]= (((int32_t)Audio_buffer_4[i]) <<8); /*Right Channel - filter 1+2*/
-			Audio_output_bufferB[AUDIO_OUTPUT_BUF_SIZE*buffer+2*i + 1]= (((int32_t)Audio_buffer_3[i]) <<8); /*Right Channel - filter 1+3*/
-
+	    	Audio_output_bufferA[AUDIO_OUTPUT_BUF_SIZE*buffer+2*i]= (((uint32_t)Audio_buffer_2[i])<<8); /*Left Channel - filter1+2*/
+			Audio_output_bufferA[AUDIO_OUTPUT_BUF_SIZE*buffer+2*i + 1]= (((uint32_t)Audio_buffer_1[i])<<8); /*Left Channel - filter1+3*/
+			//??
+			Audio_output_bufferB[AUDIO_OUTPUT_BUF_SIZE*buffer+2*i]=(((uint32_t)Audio_buffer_input_R[i])<<8);
+			Audio_output_bufferB[AUDIO_OUTPUT_BUF_SIZE*buffer+2*i+1]= (((uint32_t)Audio_buffer_input_R[i])<<8); //(((int32_t)Audio_buffer_input_R[i])<<8);
+			//Audio_output_bufferB[AUDIO_OUTPUT_BUF_SIZE*buffer+2*i + 1]= 0; /*Right Channel - filter 1+3*/
+			//Audio_output_bufferB[AUDIO_OUTPUT_BUF_SIZE*buffer+2*i]= (((int32_t)Audio_buffer_4[i]) <<8); /*Right Channel - filter 1+2*/
+			//Audio_output_bufferB[AUDIO_OUTPUT_BUF_SIZE*buffer+2*i + 1]= (((int32_t)Audio_buffer_3[i]) <<8); /*Right Channel - filter 1+3*/
 		}
+
+	    //?? To go pro interface, set the first bit of the 192 frames to 1
+	    Audio_output_bufferB[AUDIO_OUTPUT_BUF_SIZE*buffer] |= ((uint32_t)0x04000000U);
 
 		// if the buffer to fill is the 2nd half and it is an incomplete buffer
 		// then we have to fill with zeros as the playback has already started and is difficult to stop

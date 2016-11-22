@@ -203,7 +203,7 @@ void dsp(int16_t* buffer_input, int16_t* buffer_outputA, int16_t* buffer_outputB
 	//??arm_float_to_q15(outputf32, buffer_outputB, size);
 	//arm_float_to_q15(inputf32, buffer_outputB, size);
 
-	//memcpy(buffer_outputA,buffer_input,size);
+	memcpy(buffer_outputA,buffer_input,size*2);
 	memcpy(buffer_outputB,buffer_input,size*2);
 
 }
