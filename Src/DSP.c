@@ -7,15 +7,8 @@
 
 #include "dsp.h"
 #include "usbd_audio.h"
-// arm c library includes
 #include "stdbool.h"
-
-// arm cmsis library includes <= added as symbols in project properties
-
 #include "arm_math.h"
-// #include "math_helper.h" //## check usage ???
-
-
 
 
 /* ----------------------------------------------------------------------
@@ -42,7 +35,7 @@
 ** This part is the only part to modify for the specific application
 ** ------------------------------------------------------------------- */
 
-#define SCALE_INPUT		1	//scaling factor applied to input buffer
+#define SCALE_INPUT		0.3	//scaling factor applied to input buffer
 
 #define NUMSTAGES_FILTER1	2	//number of biquads in this filter
 float32_t coeffTableFilter1[5*NUMSTAGES_FILTER1] = {
@@ -89,10 +82,6 @@ float32_t coeffTableFilter3[5*NUMSTAGES_FILTER3] = {
 
 #define SCALE_OUTPUT1_3	pow(10,SCALE_OUTPUT1_3_dB/20)
 #define SCALE_OUTPUT2_4	pow(10,SCALE_OUTPUT2_4_dB/20)
-
-
-//?? check if we can rely on size parameter or constant Local buffer size is AUDIO_OUTPUT_BUFF_SIZE/2
-//#define BLOCKSIZE    512
 
 
 /* ----------------------------------------------------------------------
