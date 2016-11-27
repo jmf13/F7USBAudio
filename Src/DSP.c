@@ -10,75 +10,10 @@
 #include "stdbool.h"
 #include "arm_math.h"
 
-
 /* ----------------------------------------------------------------------
-** definition of all the parameters for the filters and digital signal 
-** processing to be performed.
-**
-** The function process the input buffer with the below sequence:
-** - convert the buffer from q15 to float
-** - scale the input by SCALE_INPUT value
-** - apply Filter1
-** - on the result of Filter1, apply Filter2 and fill a new buffer,
-**	scale by SCALE_OUTPUT1_3 value, and invert if requested by INVERT_OUTPUT1_3
-**	convert from float to q15
-** - on the result of Filter1, apply Filter3 and fill a new buffer,
-** 	scale by SCALE_OUTPUT2_4 value, and invert if requested by INVERT_OUTPUT2_4
-**	convert from float to q15
-**
-** Filter1, Filter 2 and Filter3 are Biquad cascades defined by:
-** - NUMSTAGES_FILTERx
-** - CoeffTableFilterx
-** Biquad filters format is b0, b1, b2, a1, a2
-**
-** The digital processing is the same for the Left and Right channels
-** This part is the only part to modify for the specific application
+** This dsp_config.h file contains all the application DSP parameters
 ** ------------------------------------------------------------------- */
-
-#define SCALE_INPUT		0.3	//scaling factor applied to input buffer
-
-#define NUMSTAGES_FILTER1	2	//number of biquads in this filter
-float32_t coeffTableFilter1[5*NUMSTAGES_FILTER1] = {
-  /* xxxxxx */
-		1.003791623405750, -1.916261673869340, 0.966920997039797, 1.916261673869340, -0.970712620445551,  //PEQ 1800Hz Q=7 G = 2dB
-		1.052140969066160, 0.931305193641266, 0.899631210773041, -0.931305193641266, -0.951772179839199	  //PEQ 15800Hz Q=10 G = 10dB
-};
-
-
-
-#define SCALE_OUTPUT1_3_dB		0	//scaling factor applied to output buffer 1 and 3 in dB
-#define INVERT_OUTPUT1_3 	false
-
-#define NUMSTAGES_FILTER2	4	//number of biquads in this filter
-float32_t coeffTableFilter2[5*NUMSTAGES_FILTER2] = {
-		0.001921697757295, 0.003843395514590, 0.001921697757295, 1.824651307057290, -0.832338098086468, 	//LR2 LowPass 700Hz
-		1.003858302013990, -1.993727804265180, 0.989912205497575, 1.993727804265180, -0.993770507511564,	//PEQ 50Hz 7dB 0.7Q
-		0.925455940386243, -1.431501433736160, 0.897376826164088, 1.431501433736160, -0.822832766550331,	//PEQ 5100Hz -16dB 8Q
-		0.884138082603731, -1.204926343048180, 0.776971533616450, 1.204926343048180, -0.661109616220181	//PEQ 5800Hz -10dB 3Q
-};
-
-
-#define SCALE_OUTPUT2_4_dB		-9.6	//scaling factor applied to output buffers 2 and 4 in dB
-#define INVERT_OUTPUT2_4 		true
-
-#define NUMSTAGES_FILTER3	6	//number of biquads in this filter
-float32_t coeffTableFilter3[5*NUMSTAGES_FILTER3] = {
-  /* xxxxxx */
-		0.914247351285939, -1.828494702571880, 0.914247351285939, 1.824651307057290, -0.832338098086468,	//LR2 HighPass 700Hz
-		1.123687441779500, -1.824401268684300, 0.740517306108243, 1.841148795124730, -0.847457221447315,	//LowShelf 1000Hz 16dB 0.5Q
-		0.964914620734976, -1.706046605406540, 0.844942702041952, 1.706046605406540, -0.809857322776928,	//PEQ 2600Hz -4dB 2Q
-		1.825672979584440, -1.545668441710860, 0.543324542467308, 0.367563755077364, -0.190892835418248,	//HighShelf 8000Hz 8dB 0.7Q
-		1.038044950607060, -0.469900579205428, 0.777511470363804, 0.469900579205428, -0.815556420970861,	//PEQ 10000Hz 3dB 4Q
-		0.962297780890294, 0.262262826325308, 0.865411704698658, -0.262262826325308, -0.827709485588952	//PEQ 13100Hz -5dB 7Q
-};
-
-/* ----------------------------------------------------------------------
-** End of definition of all the parameters for the filters and digital signal 
-** processing to be performed.
-** ------------------------------------------------------------------- */
-
-
-
+#include "dsp_config.h"
 
 #define SCALE_OUTPUT1_3	pow(10,SCALE_OUTPUT1_3_dB/20)
 #define SCALE_OUTPUT2_4	pow(10,SCALE_OUTPUT2_4_dB/20)
