@@ -136,11 +136,6 @@ void Audio_Loop (void)
 	
 	while(1){
 
-      /*if(player_state == PLAYER_STARTED) {
-    	  BSP_LED_On(LED2);
-      } else {
-    	  BSP_LED_Off(LED2);
-      }*/
 	  switch(next_buff) {
   
   	    case NEXT_BUFFER_0:
@@ -203,13 +198,16 @@ static int8_t Audio_PlaybackCmd(uint8_t *pbuf, uint32_t size, uint8_t cmd)
   case AUDIO_CMD_START:
 	    // init filters
 	  	initFilter();
+	  	//?? For test
+	  	BSP_LED_Off(LED1);
+	    BSP_LED_Off(LED2);
+	  	BSP_LED_Off(LED3);
 
 		// fills first half of the output buffer with zeros, playing will start with half buffer of zeros
 		for(i=0; i<AUDIO_OUTPUT_BUF_SIZE; i++){
 			 Audio_output_bufferA[i]= 0;
 			 Audio_output_bufferB[i]= 0;
 		}
-
 	  	// Size in bytes, for a complete buffer
 		// BSP_AUDIO_OUT_SetMute(AUDIO_MUTE_OFF);
 		ErrorCode = HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t *)Audio_output_bufferA, AUDIO_OUTPUT_BUF_SIZE*2);
@@ -220,6 +218,7 @@ static int8_t Audio_PlaybackCmd(uint8_t *pbuf, uint32_t size, uint8_t cmd)
 				if( ErrorCode != 0){
 					while(1);
 				}
+
 		// we then wait for a DMA event of DMA half transferred
 	  	// fill second half of the audio_output_buffer, first half will start with 0000s
 	  	//Pull_Data from USBD_Audio - note that data are provided by USBD_Audio using the Audio_PlaybackCmd callback
@@ -305,40 +304,47 @@ void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *hsai)
   {
     case PLAYER_STARTED:
 	  //start playing the prepared buffer
-
-      if( HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t *)Audio_output_bufferA, AUDIO_OUTPUT_BUF_SIZE*2)!= 0){
+      //?? test purpose, to go to circular buffers
+      /*if( HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t *)Audio_output_bufferA, AUDIO_OUTPUT_BUF_SIZE*2)!= 0){
     	while(1);
       }
       if( HAL_SAI_Transmit_DMA(&hsai_BlockB1, (uint8_t *)Audio_output_bufferB, AUDIO_OUTPUT_BUF_SIZE*2)!= 0){
-          BSP_LED_On(LED3);
     	  while(1);
-            }
+            } */
 
 	  //Pull_Data from USBD_Audio - note that data are provided by USBD_Audio using the Audio_PlaybackCmd callback
-	  USBD_AUDIO_DataPull (&hUsbDeviceFS);
+	  //?? test
+    	if (next_buff != NEXT_BUFFER_NO) {
+    			BSP_LED_On(LED3);
+    		}
+      USBD_AUDIO_DataPull (&hUsbDeviceFS);
 	  next_buff = NEXT_BUFFER_1;
 	  Audio_output_buffer_size = 0;
       break;
     //?? See how to fill buffer with zeros to complement the incomplete buffer
     case PLAYER_STOPPING:
         //Start playing the prepared buffer before being stopped
-
-    	if( HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t *)Audio_output_bufferA, AUDIO_OUTPUT_BUF_SIZE*2)!= 0){
+    	//?? test purpose, to go to circular buffers
+    	/* if( HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t *)Audio_output_bufferA, AUDIO_OUTPUT_BUF_SIZE*2)!= 0){
     	    while(1);
     	}
     	if( HAL_SAI_Transmit_DMA(&hsai_BlockB1, (uint8_t *)Audio_output_bufferB, AUDIO_OUTPUT_BUF_SIZE*2)!= 0){
     	    	    while(1);
-    	    	}
+    	    	} */
 	    Audio_output_buffer_size = 0;
 	    //we don't pull data, set next_buffer to no filling, and stop the player
 	    next_buff = NEXT_BUFFER_NO;
-
-	    //?? See how to fill buffer with zeros to complement the incomplete buffer
 	    player_state = PLAYER_STOPPED;
         break;
 
     case PLAYER_STOPPED:
     	//BSP_AUDIO_OUT_SetMute(AUDIO_MUTE_ON);
+    	//??check how to Mute the SAI
+    	HAL_SAI_DMAStop(&hsai_BlockA1);
+    	HAL_SAI_DMAStop(&hsai_BlockB1);
+    	/* Flush the fifo - This is necessary as if not done there may be a mismatch between Left and Right channels when restarting */
+    	SET_BIT(hsai_BlockA1.Instance->CR2, SAI_xCR2_FFLUSH);
+    	SET_BIT(hsai_BlockB1.Instance->CR2, SAI_xCR2_FFLUSH);
       break;
    }
  }
@@ -361,6 +367,11 @@ switch(player_state)
     case PLAYER_STARTED:
 	//Pull_Data from USBD_Audio - note that data are provided by USBD_Audio using the Audio_PlaybackCmd callback
 	USBD_AUDIO_DataPull (&hUsbDeviceFS);
+
+	//??test not enough time
+	if (next_buff != NEXT_BUFFER_NO) {
+		BSP_LED_On(LED3);
+	}
 	next_buff = NEXT_BUFFER_0;
       break;
 
@@ -379,6 +390,10 @@ switch(player_state)
 void fill_buffer (int buffer, uint8_t *pbuf, uint32_t size) // buffer=0 for first half of the buffer buffer = 1 for second half
 {
 	int i=0;
+
+	//??for test
+	int notZero =0;
+
 	// This is needed to translate the bytes buffer from usbd_audio in int_16 music data
 	uint16_t * pbuf_uint16 = (uint16_t *)pbuf;
 
@@ -386,19 +401,24 @@ void fill_buffer (int buffer, uint8_t *pbuf, uint32_t size) // buffer=0 for firs
 	   // So the loop has to be performed on size/2
 	   for(i=0; i<size/2; i++){
 			Audio_buffer_1[i]= *pbuf_uint16++;
+			//??for test
+			if (Audio_buffer_1[i] != 0) notZero = 1;
+
 			Audio_buffer_3[i]= *pbuf_uint16++;
+			//??for test
+			if (Audio_buffer_3[i] != 0) notZero = 1;
 
 		}
+	   //??for test
+	   if (notZero == 1) {
+		   // BSP_LED_On(LED1);
+	   }
 
 		// Build stereo Audio_output_buffer from Audio_buffer_L and Audio_buffer_R, filling the requested
 		// ping pong buffer: first half offset 0 or second half offset AUDIO_OUTPUT_BUFF_SIZE
 
 	    dsp((int16_t*)&Audio_buffer_1[0], (int16_t*)&Audio_buffer_1[0], (int16_t*)&Audio_buffer_2[0], size/2, 0);
 	   	dsp((int16_t*)&Audio_buffer_3[0], (int16_t*)&Audio_buffer_3[0], (int16_t*)&Audio_buffer_4[0], size/2, 1);
-
-	    if (size != AUDIO_OUTPUT_BUF_SIZE){
-	    	BSP_LED_Toggle(LED3);
-	    }
 
 	    for(i=0; i<size/2; i++){
 			 Audio_output_bufferA[AUDIO_OUTPUT_BUF_SIZE*buffer+2*i]= (((uint32_t)Audio_buffer_2[i]) <<8); /*Left Channel - filter1+2*/

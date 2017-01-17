@@ -75,6 +75,9 @@ float32_t coeffTableFilter3[5*NUMSTAGES_FILTER3] = {
 		0.962297, 0.26226282, 0.86541170, -0.2622628, -0.827709
 };
 
+// delays to the different channels - Max 8 channels
+float32_t delays[MAX_CHANNELS] = {0.0, 0.01, 0.0, 0.01};
+
 /* ----------------------------------------------------------------------
 ** End of definition of all the parameters for the filters and digital signal
 ** processing to be performed.

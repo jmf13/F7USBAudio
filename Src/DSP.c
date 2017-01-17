@@ -5,14 +5,11 @@
  *      Author: JMF
  */
 
+#include <delay_lines.h>
 #include "dsp.h"
 #include "usbd_audio.h"
 #include "stdbool.h"
 #include "arm_math.h"
-
-/* ----------------------------------------------------------------------
-** This dsp_config.h file contains all the application DSP parameters
-** ------------------------------------------------------------------- */
 #include "dsp_config.h"
 
 #define SCALE_OUTPUT1_3	pow(10,SCALE_OUTPUT1_3_dB/20)
@@ -40,6 +37,10 @@ static float32_t biquadStatef32_F3R [4 * NUMSTAGES_FILTER3];
 float32_t inputf32[AUDIO_OUTPUT_BUF_SIZE/2];
 float32_t outputf32[AUDIO_OUTPUT_BUF_SIZE/2];
 
+/* ----------------------------------------------------------------------
+** Instance structures for delay lines
+** ------------------------------------------------------------------- */
+static delay_lines_data_struct delay_lines[MAX_CHANNELS]; //one per channel
 
 /* ?? check if we can have an initialization of the filters by the client application
 bool firstStart = false; */
@@ -57,6 +58,9 @@ void dsp(int16_t* buffer_input, int16_t* buffer_outputA, int16_t* buffer_outputB
 	arm_biquad_casd_df1_inst_f32 *F1;
 	arm_biquad_casd_df1_inst_f32 *F2;
 	arm_biquad_casd_df1_inst_f32 *F3;
+	delay_lines_data_struct *D1; // Delay on Woofer
+	delay_lines_data_struct *D2; // Delay on Tweeter
+
 
 	// ?? check if needed
 	//float32_t *biquadStatef32;
@@ -65,12 +69,16 @@ void dsp(int16_t* buffer_input, int16_t* buffer_outputA, int16_t* buffer_outputB
 		F1 = &F1L;
 		F2 = &F2L;
 		F3 = &F3L;
+		D1 = &delay_lines[0];
+		D2 = &delay_lines[1];
 	}
 	else
 	{
 		F1 = &F1R;
 		F2 = &F2R;
 		F3 = &F3R;
+		D1 = &delay_lines[2];
+		D2 = &delay_lines[3];
 	};
 	
 
@@ -80,9 +88,7 @@ void dsp(int16_t* buffer_input, int16_t* buffer_outputA, int16_t* buffer_outputB
 	arm_q15_to_float(buffer_input, inputf32, size);
 	
 	/* ----------------------------------------------------------------------
-	** Scale  by SCALE_INPUT.  This provides additional headroom so that the
-	** graphic EQ can apply gain.
-	** ?? This is to be checked
+	** Scale  by SCALE_INPUT.  This provides additional headroom
 	** ------------------------------------------------------------------- */
 	if (SCALE_INPUT != 1) {
 		arm_scale_f32(inputf32, SCALE_INPUT,inputf32, size);
@@ -109,15 +115,25 @@ void dsp(int16_t* buffer_input, int16_t* buffer_outputA, int16_t* buffer_outputB
 	/* ----------------------------------------------------------------------
 	** Apply F3 to the result of F1 - prolonging the existing filter "branch"
 	** ------------------------------------------------------------------- */
-	arm_biquad_cascade_df1_f32(F3, inputf32, inputf32, size);
 
 	if (SCALE_OUTPUT2_4 != 1) {
 		arm_scale_f32(inputf32, SCALE_OUTPUT2_4,inputf32, size);
 	}
 
+	arm_biquad_cascade_df1_f32(F3, inputf32, inputf32, size);
+
 	if (INVERT_OUTPUT2_4) {
 		arm_negate_f32 (inputf32,inputf32, size);
 	}
+
+	/* ----------------------------------------------------------------------
+	** Apply fractionnal delay lines to both lines
+	** ------------------------------------------------------------------- */
+	// delay on woofer
+	delay_lines_run(D1, outputf32, outputf32, size);
+
+	// delay on tweeter
+	delay_lines_run(D2, inputf32, inputf32, size);
 
 
 	/* ----------------------------------------------------------------------
@@ -160,5 +176,7 @@ void initFilter(void)
 	arm_biquad_cascade_df1_init_f32(&F3R, NUMSTAGES_FILTER3,
             &coeffTableFilter3[0],
 			&biquadStatef32_F3R[0]);
+	// Init fractional delay lines
+	delay_lines_init(delay_lines, delays);
 
 }

@@ -104,8 +104,9 @@
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
 	<storageModule moduleId="refreshScope" versionNumber="2">
-		<configuration artifactName="F7USBAudio" configurationName="Debug">
-			<resource resourceType="PROJECT" workspacePath="F7USBAudio"/>
+		<configuration configurationName="Debug">
+			<resource resourceType="PROJECT" workspacePath="/F7USBAudio"/>
 		</configuration>
 	</storageModule>
+	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 </cproject>

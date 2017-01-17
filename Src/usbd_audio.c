@@ -596,7 +596,7 @@ static uint8_t  USBD_AUDIO_DataIn (USBD_HandleTypeDef *pdev,
 	   SOF_num=0;
 
 	}
-	//BSP_LED_Toggle(LED1);
+	// BSP_LED_Toggle(LED3);
     return USBD_OK;
 }
 
@@ -704,35 +704,33 @@ void  USBD_AUDIO_DataPull (USBD_HandleTypeDef *pdev)
 	if 		(gap < SPK1_GAP_L2) { 		// gap < inner lower bound => 1*FB_RATE_DELTA
 				//??
 		        //feedback_data =0x0C0666+128;
-				BSP_LED_Off(LED1);
-				BSP_LED_Off(LED1);
-				BSP_LED_On(LED2);
+				BSP_LED_Off(LED2);
+				BSP_LED_On(LED1);
 				}
 			else if (gap < SPK1_GAP_L1) { 			// gap < outer lower bound => 2*FB_RATE_DELTA
 				feedback_data =0x0C0666;
 				//BSP_LED_Off(LED3);
-				BSP_LED_On(LED1);
-				BSP_LED_Off(LED2);
+				//BSP_LED_Off(LED1);
+				//BSP_LED_Off(LED2);
 			}
 
 			else if (gap > SPK1_GAP_U2) { 		// gap < inner lower bound => 1*FB_RATE_DELTA
 				//feedback_data =0x0BF99A-128;
 				//BSP_LED_Off(LED3);
-				BSP_LED_On(LED3);
-				BSP_LED_Off(LED2);
-				BSP_LED_Off(LED1);
+				BSP_LED_On(LED2);
+				//BSP_LED_Off(LED1);
 			}
 			else if (gap > SPK1_GAP_U1) { 		// gap < inner lower bound => 1*FB_RATE_DELTA
 				feedback_data = 0x0BF99A;
 				//feedback_data = 0x0BE000;
-				BSP_LED_Off(LED1);
+				//BSP_LED_Off(LED1);
 				//BSP_LED_On(LED3);
-				BSP_LED_On(LED2);
+				//BSP_LED_Off(LED2);
 			}
 
 			else {		// Go back to indicating feedback system on module LEDs
-				BSP_LED_Off(LED1);
-				BSP_LED_Off(LED2);
+				//BSP_LED_Off(LED1);
+				//BSP_LED_Off(LED2);
 				//BSP_LED_Off(LED3);
 			}
 //  } else {
